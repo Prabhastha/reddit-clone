@@ -1,0 +1,49 @@
+type Post
+  @model
+  @auth(
+    rules: [
+      # Owner can perform any action on their post
+      { allow: owner, operations: [create, read, update, delete] }
+      # Other signed in users can read everyones post
+      { allow: private, operations: [read] }
+      # Non-signed in users (guests) can read everyones posts as well
+      { allow: public, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  title: String!
+  content: String!
+  image: String
+  votes: [Vote!]! @hasMany(indexName: "byVote", fields: ["id"])
+  comments: [Comment] @hasMany(indexName: "byPost", fields: ["id"])
+}
+
+type Comment
+  @model
+  @auth(
+    rules: [
+      { allow: owner, operations: [create, read, update, delete] }
+      { allow: private, operations: [read] }
+      { allow: public, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  postID: ID! @index(name: "byPost", sortKeyFields: ["content"])
+  post: Post @belongsTo(fields: ["postID"])
+  content: String!
+}
+
+type Vote
+  @model
+  @auth(
+    rules: [
+      { allow: owner, operations: [create, read, update, delete] }
+      { allow: private, operations: [read] }
+      { allow: public, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  vote: String! # true = upvote and false = downvote
+  postID: ID! @index(name: "byVote", sortKeyFields: ["vote"])
+  post: Post @belongsTo(fields: ["postID"])
+}
